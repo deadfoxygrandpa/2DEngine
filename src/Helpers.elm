@@ -12,10 +12,10 @@ import Types (Point, Vertex)
 
 quad : Point -> Point -> Point -> Point -> List (Triangle Vertex)
 quad (x1, y1) (x2, y2) (x3, y3) (x4, y4) =
-    let topLeft     = Vertex (vec2 x1 y1) (vec2 0 0)
-        topRight    = Vertex (vec2 x2 y2) (vec2 1 0)
-        bottomLeft  = Vertex (vec2 x3 y3) (vec2 0 1)
-        bottomRight = Vertex (vec2 x4 y4) (vec2 1 1)
+    let topLeft     = Vertex (vec2 x1 y1) (vec2 0 1)
+        topRight    = Vertex (vec2 x2 y2) (vec2 1 1)
+        bottomLeft  = Vertex (vec2 x3 y3) (vec2 0 0)
+        bottomRight = Vertex (vec2 x4 y4) (vec2 1 0)
     in  [ ( topLeft, topRight, bottomLeft)
         , ( bottomLeft, topRight, bottomRight)
         ]
