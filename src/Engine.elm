@@ -18,9 +18,10 @@ import Shaders
 baseTile : List (Triangle Vertex)
 baseTile = quad (-1, 1) (1, 1) (-1, -1) (1, -1)
 
-spriteTile : Int -> Int -> Color -> Texture -> (Int, Int) -> Tile
-spriteTile x y color texture offset perspective =
+spriteTile : Int -> Int -> Int -> Int -> Color -> Texture -> (Int, Int) -> Tile
+spriteTile x y w h color texture offset perspective =
     let (x', y') = (toFloat x, toFloat y)
+        v3 (a, b) = vec3 (toFloat a) (toFloat b) 0
     in  entity
             Shaders.texturedVertexShader
             Shaders.spriteFragmentShader
@@ -29,7 +30,9 @@ spriteTile x y color texture offset perspective =
             , offset = makeOffset offset
             , color = fromRGB color
             , texture = texture
-            , sprite = vec3 x' y' 0
+            , size = v3 (textureSize texture)
+            , sprite = v3 (x, y)
+            , sprite2 = v3 (w, h)
             }
 
 texturedTile : Color -> Texture -> (Int, Int) -> Tile
@@ -76,3 +79,5 @@ makeOffset (x, y) = vec2 (toFloat x) (toFloat y)
 
 texture : String -> Signal (Maybe Texture)
 texture url = responseToMaybe <~ loadTexture url
+
+size = textureSize

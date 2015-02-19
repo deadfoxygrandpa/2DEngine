@@ -75,7 +75,7 @@ uniform sampler2D texture;
 varying vec2 vcoord;
 
 void main () {
-    vec4 tcolor = texture2D(texture, vcoord);
+    vec4 tcolor = texture2D(texture, vec2(vcoord.x, -vcoord.y));
     if (tcolor.a < 0.1) {
         discard;
     } else {
@@ -86,19 +86,24 @@ void main () {
 |]
 
 spriteFragmentShader : Shader {}
-                              { unif | color : Vec4, texture : Texture, sprite : Vec3 }
+                              { unif | color : Vec4, texture : Texture, size : Vec3, sprite : Vec3, sprite2 : Vec3 }
                               { vcoord : Vec2 }
 spriteFragmentShader = [glsl|
 
 precision mediump float;
 uniform vec4 color;
 uniform sampler2D texture;
+uniform vec3 size;
 uniform vec3 sprite;
+uniform vec3 sprite2;
 varying vec2 vcoord;
 
 void main () {
-    vec2 spritecoord = vcoord + sprite.xy;
-    vec2 coord = vec2(spritecoord.x, 16.0 - spritecoord.y) / 16.0;
+    float xScale = size.x / sprite2.x;
+    float yScale = size.y / sprite2.y;
+    float y = 1.0 - sprite.y;
+    vec2 spritecoord = vec2(sprite.x / size.x, y / size.y);
+    vec2 coord = vec2(spritecoord.x, spritecoord.y) + (vcoord / vec2(xScale, -yScale));
     vec4 tcolor = texture2D(texture, coord);
     if (tcolor.a < 0.1) {
         discard;
