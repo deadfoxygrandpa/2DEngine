@@ -3,11 +3,19 @@ module BMFont where
 import Text
 import List
 import String
+import Char
+import Color (Color)
+import Dict
+import Debug
 
 import Parser (..)
-import Parser.Char as Char
+import Parser.Char as PChar
 import Parser.Number as Number
 
+import Types
+import Engine
+
+-- Modeling of the BMFont format
 type alias Info =
     { face : String
     , size : Float
@@ -58,9 +66,10 @@ type alias BMFont =
     { info : Info
     , common : Common
     , pages : List Page
-    , characters : List Character
+    , characters : Dict.Dict Char Character
     }
 
+-- Parsing the BMFont file formwat
 infoParser : Parser Info
 infoParser =
     let commaSeparatedInt = Number.integer <* symbol ','
@@ -121,12 +130,20 @@ charParser =
 
 parser : Parser BMFont
 parser =
-    BMFont `map`
-    infoParser <* newline `and`
-    commonParser <* newline `and`
-    separatedBy pageParser newline <* newline `and`
-    (token "chars count=" *> Number.integer *> newline *> separatedBy charParser newline)
+    let makePair char = (Char.fromCode char.id, char)
+        charPairs = token "chars count="
+                      *> Number.integer
+                      *> newline
+                      *> map (List.map makePair) (separatedBy charParser newline)
+        charDict = map Dict.fromList charPairs
+    in
+        BMFont `map`
+        infoParser <* newline `and`
+        commonParser <* newline `and`
+        separatedBy pageParser newline <* newline `and`
+        charDict
 
+-- Parsing helper functions
 section : String -> Parser a -> Parser a
 section s p = whitespace *> token s *> symbol '=' *> p
 
@@ -149,13 +166,13 @@ anyChar : Parser Char
 anyChar = satisfy (\c -> c /= '"')
 
 char : Parser Char
-char = Char.between '"' '"' anyChar
+char = PChar.between '"' '"' anyChar
 
 string : Parser String
 string =
     let string' = map String.fromList (many anyChar)
     in
-        Char.between '"' '"' string'
+        PChar.between '"' '"' string'
 
 bool : Parser Bool
 bool = (symbol '0' *> succeed False) `or` (symbol '1' *> succeed True)
@@ -163,7 +180,38 @@ bool = (symbol '0' *> succeed False) `or` (symbol '1' *> succeed True)
 float : Parser Float
 float = Number.float `or` (map toFloat Number.integer)
 
-main = Text.asText <| parse parser bmfont
+-- API
+
+write : String -> Color -> Types.Texture -> (Int, Int) -> List Types.Tile
+write s color texture (startingX, startingY) =
+    let chars = String.toList s
+        makeTile (char, x') = let {x, y, width, height} = getSpriteCoordinates char
+                              in
+                                Engine.spriteTile x y width height color texture (x', startingY)
+        xs = [startingX .. List.length chars + startingX]
+    in
+        List.map makeTile <| List.map2 (,) chars xs
+
+getSpriteCoordinates : Char -> {x : Int, y : Int, width : Int, height : Int}
+getSpriteCoordinates char =
+    let char' = case Dict.get char font.characters of
+                        Just c -> c
+                        Nothing -> case Dict.get '?' font.characters of
+                                    Just c -> c
+                                    Nothing -> defaultChar
+    in
+        {x = char'.x, y = char'.y, width = char'.width, height = char'.height}
+
+defaultChar : Character
+defaultChar =
+    Character 0 0 0 1 1 0 0 0 0 0
+
+font : BMFont
+font = case parse parser bmfont of
+    Ok (x::xs) -> x
+
+-- Demo stuff
+main = Text.asText <| font
 
 bmfont = """info face="Consolas" size=32 bold=1 italic=0 charset="ANSI" unicode=0 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1 outline=0
 common lineHeight=32 base=25 scaleW=512 scaleH=512 pages=1 packed=0 alphaChnl=1 redChnl=0 greenChnl=0 blueChnl=0

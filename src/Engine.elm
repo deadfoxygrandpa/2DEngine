@@ -9,20 +9,21 @@ import Math.Vector2 (Vec2, vec2)
 import Math.Vector3 (..)
 import Math.Vector4 (Vec4, vec4)
 import Math.Matrix4 (..)
-import WebGL (..)
+import WebGL
 
 import Types (..)
 import Helpers (..)
 import Shaders
 
-baseTile : List (Triangle Vertex)
+baseTile : List (WebGL.Triangle Vertex)
 baseTile = quad (-1, 1) (1, 1) (-1, -1) (1, -1)
 
 spriteTile : Int -> Int -> Int -> Int -> Color -> Texture -> (Int, Int) -> Tile
 spriteTile x y w h color texture offset perspective =
     let (x', y') = (toFloat x, toFloat y)
         v3 (a, b) = vec3 (toFloat a) (toFloat b) 0
-    in  entity
+    in
+        WebGL.entity
             Shaders.texturedVertexShader
             Shaders.spriteFragmentShader
             baseTile
@@ -30,14 +31,14 @@ spriteTile x y w h color texture offset perspective =
             , offset = makeOffset offset
             , color = fromRGB color
             , texture = texture
-            , size = v3 (textureSize texture)
+            , size = v3 (WebGL.textureSize texture)
             , sprite = v3 (x, y)
             , sprite2 = v3 (w, h)
             }
 
 texturedTile : Color -> Texture -> (Int, Int) -> Tile
 texturedTile color texture offset perspective =
-    entity
+    WebGL.entity
         Shaders.texturedVertexShader
         Shaders.texturedFragmentShader
         baseTile
@@ -50,7 +51,8 @@ texturedTile color texture offset perspective =
 coloredTile : Color -> (Int, Int) -> Tile
 coloredTile color offset perspective =
     let color' = fromRGB color
-    in  entity
+    in
+        WebGL.entity
             Shaders.solidColorVertexShader
             Shaders.solidColorFragmentShader
             baseTile
@@ -72,12 +74,13 @@ display (w, h) (xScale, yScale) tiles =
         w'' = (toFloat w) * xScale |> round
         h'' = (toFloat h) * yScale |> round
         dimensions = (w'', h'')
-    in webgl dimensions <| List.map (\tile -> tile perspective) tiles
+    in
+        WebGL.webgl dimensions <| List.map (\tile -> tile perspective) tiles
 
 makeOffset : (Int, Int) -> Vec2
 makeOffset (x, y) = vec2 (toFloat x) (toFloat y)
 
 texture : String -> Signal (Maybe Texture)
-texture url = responseToMaybe <~ loadTexture url
+texture url = responseToMaybe <~ WebGL.loadTexture url
 
-size = textureSize
+size = WebGL.textureSize
