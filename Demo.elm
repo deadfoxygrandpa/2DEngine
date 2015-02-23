@@ -19,7 +19,7 @@ sprite t x y = Engine.spriteTile 261 55 26 44 Color.orange
 
 tex t _ _ = Engine.texturedTile Color.orange t (0, 0)
 
-txt t s = BMFont.write s Color.red t (-25, 0)
+txt t s = BMFont.write s Color.lightOrange t (-25, 0)
 
 scene t' s = case t' of
     Just t -> txt t s
@@ -34,4 +34,4 @@ msgString = .string <~ Signal.subscribe msg
 msgField : Signal.Signal Element
 msgField = Field.field Field.defaultStyle (Signal.send msg) "type here" <~ Signal.subscribe msg
 
-main = (\texture field s -> flow down [color Color.purple <| Engine.display (50, 1) (15, 32) (scene texture s), field]) <~ texture ~ msgField ~ msgString
+main = (\texture field s -> flow down [color Color.darkPurple <| Engine.display (50, 1) (15, 32) (scene texture s), field]) <~ texture ~ msgField ~ msgString
