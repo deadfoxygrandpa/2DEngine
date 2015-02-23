@@ -105,10 +105,10 @@ void main () {
     vec2 spritecoord = vec2(sprite.x / size.x, y / size.y);
     vec2 coord = vec2(spritecoord.x, spritecoord.y) + (vcoord / vec2(xScale, -yScale));
     vec4 tcolor = texture2D(texture, coord);
-    if (tcolor.a < 0.1) {
+    if (tcolor.a == 0.0) {
         discard;
     } else {
-        gl_FragColor = color * tcolor;
+        gl_FragColor = color;
     }
 }
 
