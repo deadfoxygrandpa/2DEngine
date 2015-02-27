@@ -185,12 +185,12 @@ float = Number.float `or` (map toFloat Number.integer)
 write : String -> Color -> Types.Texture -> (Int, Int) -> List Types.Tile
 write s color texture (startingX, startingY) =
     let chars = String.toList s
-        makeTile (char, x') = let {x, y, width, height} = getSpriteCoordinates char
-                              in
-                                Engine.spriteTile x y width height color texture (x', startingY)
-        xs = [startingX .. List.length chars + startingX]
+        makeTile char = let {x, y, width, height} = getSpriteCoordinates char
+                            xadvance = getXAdvance char
+                        in
+                          Engine.spriteTile x y width height color texture (startingX + xadvance, startingY)
     in
-        List.map makeTile <| List.map2 (,) chars xs
+        List.map makeTile chars
 
 getSpriteCoordinates : Char -> {x : Int, y : Int, width : Int, height : Int}
 getSpriteCoordinates char =
@@ -201,6 +201,16 @@ getSpriteCoordinates char =
                                     Nothing -> defaultChar
     in
         {x = char'.x, y = char'.y, width = char'.width, height = char'.height}
+
+getXAdvance : Char -> Int
+getXAdvance char =
+    let char' = case Dict.get char font.characters of
+        Just c -> c
+        Nothing -> case Dict.get '?' font.characters of
+                    Just c -> c
+                    Nothing -> defaultChar
+    in
+        char'.xadvance
 
 defaultChar : Character
 defaultChar =

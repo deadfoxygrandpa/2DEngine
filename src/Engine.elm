@@ -19,7 +19,11 @@ baseTile : List (WebGL.Triangle Vertex)
 baseTile = quad (-1, 1) (1, 1) (-1, -1) (1, -1)
 
 spriteTile : Int -> Int -> Int -> Int -> Color -> Texture -> (Int, Int) -> Tile
-spriteTile x y w h color texture offset perspective =
+spriteTile x y w h color texture (xOffset, yOffset) perspective =
+    spriteTile2 x y w h color texture (toFloat xOffset, toFloat yOffset) perspective
+
+spriteTile2 : Int -> Int -> Int -> Int -> Color -> Texture -> (Float, Float) -> Tile
+spriteTile2 x y w h color texture offset perspective =
     let (x', y') = (toFloat x, toFloat y)
         v3 (a, b) = vec3 (toFloat a) (toFloat b) 0
     in
@@ -28,10 +32,10 @@ spriteTile x y w h color texture offset perspective =
             Shaders.spriteFragmentShader
             baseTile
             { perspective = perspective
-            , offset = makeOffset offset
+            , offset = makeOffset2 offset
             , color = fromRGB color
             , texture = texture
-            , size = v3 (WebGL.textureSize texture)
+            , size = v3 (size texture)
             , sprite = v3 (x, y)
             , sprite2 = v3 (w, h)
             }
@@ -78,9 +82,12 @@ display (w, h) (xScale, yScale) tiles =
         WebGL.webgl dimensions <| List.map (\tile -> tile perspective) tiles
 
 makeOffset : (Int, Int) -> Vec2
-makeOffset (x, y) = vec2 (toFloat x) (toFloat y)
+makeOffset (x, y) = makeOffset2 ((toFloat x), (toFloat y))
+
+makeOffset2 : (Float, Float) -> Vec2
+makeOffset2 (x, y) = vec2 x y
 
 texture : String -> Signal (Maybe Texture)
 texture url = responseToMaybe <~ WebGL.loadTexture url
 
-size = WebGL.textureSize
+size _ = (512, 512)
